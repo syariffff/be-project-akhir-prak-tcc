@@ -162,3 +162,28 @@ export const logout = async (req, res) => {
     });
   }
 };
+
+// Get user profile (data user yang sedang login berdasarkan token)
+export const getUserProfile = async (req, res) => {
+  try {
+    const userId = req.user.id; // pastikan middleware auth sudah mengisi req.user
+
+    // Cari user berdasarkan id
+    const user = await Users.findOne({
+      where: { id: userId },
+      attributes: ["id", "username"], // ambil hanya field yang diperlukan
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: "User tidak ditemukan" });
+    }
+
+    res.status(200).json(user);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      message: "Terjadi kesalahan pada server",
+      error: error.message,
+    });
+  }
+};

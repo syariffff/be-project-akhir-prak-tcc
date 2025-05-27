@@ -1,4 +1,6 @@
 import Review from "../models/ReviewModel.js";
+import Users from "../models/UserModel.js";
+import Anime from "../models/AnimeModel.js";
 
 // Create Review
 export const createReview = async (req, res) => {
@@ -22,7 +24,7 @@ export const createReview = async (req, res) => {
       rating,
       comment: comment.trim(),
       userId,
-      animeId,
+      anime_id: animeId,
     });
 
     res.status(201).json({
@@ -75,7 +77,25 @@ export const getReview = async (req, res) => {
   const id = req.user.id;
 
   try {
-    const review = await Review.findAll({ where: { userId: id } });
+    const review = await Review.findAll({ 
+      where: { userId: id }, 
+     });
+
+    res.status(200).json({
+      message: "Review berhasil diambil",
+      userId: id,
+      data: review,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const getReviewAll = async (req, res) => {
+  const id = req.user.id;
+
+  try {
+    const review = await Review.findAll({});
 
     res.status(200).json({
       message: "Review berhasil diambil",
@@ -104,6 +124,61 @@ export const deleteReview = async (req, res) => {
       data: review,
     });
   } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Get reviews by animeId
+export const getReviewByAnimeId = async (req, res) => {
+  const animeId = req.params.id;
+
+  try {
+    const reviews = await Review.findAll({
+      where: { anime_id:animeId },
+      include: [
+        {
+          model: Users,
+          attributes: ["username", "id"], // hanya ambil username user
+        },
+      ],
+      order: [['created_at', 'DESC']],
+    });
+
+    res.status(200).json({
+      message: "Review berhasil diambil berdasarkan animeId",
+      animeId,
+      data: reviews,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Get Review by ID
+export const getReviewById = async (req, res) => {
+  const { id } = req.params; // ambil id dari parameter URL
+  const userId = req.user.id; // user yang sedang login, pastikan middleware auth sudah jalan
+
+  try {
+    // Cari review berdasarkan id dan userId (supaya review milik user tersebut)
+    const review = await Review.findOne({
+      where: {
+        id,
+        userId,
+      },
+    });
+
+    if (!review) {
+      return res.status(404).json({ message: "Review tidak ditemukan" });
+    }
+
+    res.status(200).json({
+      message: "Review berhasil diambil",
+      data: review,
+    });
+  } catch (error) {
+    console.error(error);
     res.status(500).json({ message: error.message });
   }
 };
